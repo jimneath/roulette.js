@@ -3,17 +3,18 @@
   // ### Defaults
 
   var defaultSettings = {
-    slots            : 1,     // x > 0
-    maxPlayCount     : null,  // x >= 0 or null
-    speed            : 10,    // x > 0
-    stopImageNumber  : null,  // x >= 0 or null or -1
-    rollCount        : 3,     // x >= 0
-    duration         : 3,     // (x seconds)
-    resetOnStop      : false, // resets the roll position on stop
-    isVertical       : true,  // roll direction, true = vertical, false = horizontal
-    stopCallback     : function() {},
-    startCallback    : function() {},
-    slowDownCallback : function() {}
+    slots             : 1,     // x > 0
+    maxPlayCount      : null,  // x >= 0 or null
+    speed             : 10,    // x > 0
+    stopImageNumber   : null,  // x >= 0 or null or -1
+    offsetImageNumber : 0,     // x >= 0
+    rollCount         : 3,     // x >= 0
+    duration          : 3,     // (x seconds)
+    resetOnStop       : false, // resets the roll position on stop
+    isVertical        : true,  // roll direction, true = vertical, false = horizontal
+    stopCallback      : function() {},
+    startCallback     : function() {},
+    slowDownCallback  : function() {}
   };
 
   var defaultProperty = {
@@ -64,11 +65,11 @@
     function reset() {
       p.maxDistance           = defaultProperty.maxDistance;
       p.slowDownStartDistance = defaultProperty.slowDownStartDistance;
-      p.distance              = defaultProperty.distance;
       p.isRunUp               = defaultProperty.isRunUp;
       p.isSlowdown            = defaultProperty.isSlowdown;
       p.isStop                = defaultProperty.isStop;
       if (p.resetOnStop) {
+        p.distance = defaultProperty.distance;
         p.position = defaultProperty.position;
       }
       clearTimeout(p.slowDownTimer);
@@ -88,7 +89,7 @@
       p.maxDistance           = p.distance + (2 * p.totalSize);
       p.maxDistance          += p.imageSize - p.position % p.imageSize;
       if (p.stopImageNumber != null) {
-        p.maxDistance += (p.totalSize - (p.maxDistance % p.totalSize) + (p.stopImageNumber * p.imageSize)) % p.totalSize;
+        p.maxDistance += (p.totalSize - (p.maxDistance % p.totalSize) + ((p.stopImageNumber - p.offsetImageNumber) * p.imageSize)) % p.totalSize;
       }
     }
 
@@ -98,7 +99,6 @@
      */
     function roll() {
       var speed_ = p.speed;
-
       if (p.isRunUp) {
         if (p.distance <= p.runUpDistance) {
           var rate_ = ~~((p.distance / p.runUpDistance) * p.speed);
@@ -110,21 +110,17 @@
         var rate_ = ~~(((p.maxDistance - p.distance) / (p.maxDistance - p.slowDownStartDistance)) * (p.speed));
         speed_    = rate_ + 1;
       }
-
       if (p.maxDistance && p.distance >= p.maxDistance) {
         p.isStop = true;
         reset();
         p.stopCallback(p.$rouletteTarget.find('img').eq(p.stopImageNumber));
         return;
       }
-
       p.distance += speed_;
       p.position += speed_;
-
       if (p.position >= p.totalSize) {
         p.position = p.position - p.totalSize;
       }
-
       if (p.isVertical) {
         if (p.isIE) {
           p.$rouletteTarget.css('top', '-' + p.position + 'px');
@@ -138,7 +134,6 @@
           p.$rouletteTarget.css('transform', 'translate(-' + p.position + 'px, 0px)');
         }
       }
-
       setTimeout(roll, 1);
     }
 
